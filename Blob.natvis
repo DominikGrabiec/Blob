@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="Blob">
+		<DisplayString>{{ size={size_}, pointer={data_} }}</DisplayString>
+	</Type>
+
+	<Type Name="BlobSpan">
+		<DisplayString>{{ size={size_}, pointer={pointer_} }}</DisplayString>
+	</Type>
+
+	<Type Name="BlobView">
+		<DisplayString>{{ size={size_}, pointer={pointer_} }}</DisplayString>
+	</Type>
+</AutoVisualizer>
