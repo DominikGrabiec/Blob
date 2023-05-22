@@ -26,6 +26,8 @@
 
 #include <memory>
 #include <vector>
+#include <span>
+#include <array>
 
 
 class BlobSpan;
@@ -81,6 +83,13 @@ public:
 
 	// Returns a sub view of this view starting at an offset and being of a limited size
 	[[nodiscard]] inline BlobView SubView(size_t offset, size_t bytes) const;
+
+	// Returns a slice of this view starting at offset begin (inclusive) and ending at offset end (exclusive)
+	[[nodiscard]] inline BlobView Slice(size_t begin, size_t end) const noexcept;
+
+	// Returns a std::span of type const T from a specified offset with count elements
+	template <typename T>
+	[[nodiscard]] inline std::span<const T> ArrayView(size_t offset, size_t count) const noexcept;
 
 private:
 	const void* pointer_;
@@ -139,6 +148,13 @@ public:
 
 	// Returns a sub span of this span starting at an offset and being of a limited size
 	[[nodiscard]] BlobSpan SubSpan(size_t offset, size_t bytes) const;
+
+	// Returns a slice of this span starting at offset begin (inclusive) and ending at offset end (exclusive)
+	[[nodiscard]] inline BlobSpan Slice(size_t begin, size_t end) const noexcept;
+
+	// Returns a std::span of type T from a specified offset with count elements
+	template <typename T>
+	[[nodiscard]] inline std::span<T> ArraySpan(size_t offset, size_t count) const noexcept;
 
 private:
 	void* pointer_;
@@ -226,6 +242,14 @@ public:
 
 	// Returns a constant view of this memory starting at an offset and being of a limited size
 	[[nodiscard]] BlobView View(const size_t offset, const size_t size) const;
+
+	// Returns a std::span of type const T from a specified offset with count elements
+	template <typename T>
+	[[nodiscard]] inline std::span<const T> ArrayView(size_t offset, size_t count) const noexcept;
+
+	// Returns a std::span of type T from a specified offset with count elements
+	template <typename T>
+	[[nodiscard]] inline std::span<T> ArraySpan(size_t offset, size_t count) noexcept;
 
 private:
 	uint8_t* data_;
@@ -315,6 +339,20 @@ inline BlobView BlobView::SubView(size_t offset, size_t bytes) const
 	return BlobView(Data(offset), bytes);
 }
 
+inline BlobView BlobView::Slice(size_t begin, size_t end) const noexcept
+{
+	ASSERT(begin <= size_);
+	ASSERT(end <= size_);
+	return BlobView(Data(begin), end - begin);
+}
+
+template <typename T>
+inline std::span<const T> BlobView::ArrayView(size_t offset, size_t count) const noexcept
+{
+	ASSERT(offset + count * sizeof(T) <= size_);
+	return std::span<const T>(Pointer<const T>(offset), count);
+}
+
 //------------------------------------------------------------------------------
 
 constexpr BlobSpan::BlobSpan() noexcept
@@ -391,6 +429,20 @@ inline BlobSpan BlobSpan::SubSpan(size_t offset, size_t bytes) const
 {
 	ASSERT(offset + bytes <= size_);
 	return BlobSpan(Data(offset), bytes);
+}
+
+inline BlobSpan BlobSpan::Slice(size_t begin, size_t end) const noexcept
+{
+	ASSERT(begin <= size_);
+	ASSERT(end <= size_);
+	return BlobSpan(Data(begin), end - begin);
+}
+
+template<typename T>
+inline std::span<T> BlobSpan::ArraySpan(size_t offset, size_t count) const noexcept
+{
+	ASSERT(offset + count * sizeof(T) <= size_);
+	return std::span<T>(Pointer<T>(offset), count);
 }
 
 //------------------------------------------------------------------------------
@@ -503,6 +555,20 @@ inline BlobView Blob::View(const size_t offset, const size_t size) const
 {
 	ASSERT(offset + size <= size_);
 	return BlobView(Data(offset), size);
+}
+
+template<typename T>
+inline std::span<const T> Blob::ArrayView(size_t offset, size_t count) const noexcept
+{
+	ASSERT(offset + count * sizeof(T) <= size_);
+	return std::span<const T>(Pointer<const T>(offset), count);
+}
+
+template<typename T>
+inline std::span<T> Blob::ArraySpan(size_t offset, size_t count) noexcept
+{
+	ASSERT(offset + count * sizeof(T) <= size_);
+	return std::span<T>(Pointer<T>(offset), count);
 }
 
 //------------------------------------------------------------------------------

@@ -116,6 +116,80 @@ TEST_F(BlobViewData, sub_view_returns_slices)
 	EXPECT_EQ(view.Data(view.Size() - slice_size), end_view.Data());
 }
 
+TEST_F(BlobViewData, slice_returns_same_view)
+{
+	BlobView sub_view = view.Slice(0, view.Size());
+	EXPECT_EQ(view, sub_view);
+	EXPECT_EQ(view.Data(), sub_view.Data());
+	EXPECT_EQ(view.Size(), sub_view.Size());
+}
+
+TEST_F(BlobViewData, slice_at_end_returns_empty_view)
+{
+	BlobView sub_view = view.Slice(view.Size(), view.Size());
+	EXPECT_TRUE(sub_view.Empty());
+	EXPECT_EQ(view.Data(bytes), sub_view.Data());
+	EXPECT_EQ(0, sub_view.Size());
+}
+
+TEST_F(BlobViewData, slice_returns_smaller_view)
+{
+	BlobView sub_view = view.Slice(sizeof(int), sizeof(int) * 3);
+	EXPECT_EQ(2 * sizeof(int), sub_view.Size());
+	EXPECT_EQ(view.Data(sizeof(int)), sub_view.Data());
+}
+
+TEST_F(BlobViewData, slice_returns_slices)
+{
+	constexpr size_t slice_size = sizeof(int) * 2;
+
+	BlobView front_view = view.Slice(0, slice_size);
+	EXPECT_EQ(slice_size, front_view.Size());
+	EXPECT_EQ(view.Data(), front_view.Data());
+
+	BlobView middle_view = view.Slice(slice_size, slice_size * 2);
+	EXPECT_EQ(slice_size, middle_view.Size());
+	EXPECT_EQ(view.Data(slice_size), middle_view.Data());
+
+	BlobView end_view = view.Slice(view.Size() - slice_size, view.Size());
+	EXPECT_EQ(slice_size, end_view.Size());
+	EXPECT_EQ(view.Data(view.Size() - slice_size), end_view.Data());
+}
+
+TEST_F(BlobViewData, arrayview_returns_same_elements)
+{
+	auto std_span = view.ArrayView<int>(0, elements);
+	EXPECT_EQ(view.Data(), std_span.data());
+	EXPECT_EQ(elements, std_span.size());
+	EXPECT_EQ(view.Size(), std_span.size_bytes());
+}
+
+TEST_F(BlobViewData, arrayview_returns_empty_span)
+{
+	auto std_span = view.ArrayView<int>(0, 0);
+	EXPECT_TRUE(std_span.empty());
+	EXPECT_EQ(view.Data(), std_span.data());
+	EXPECT_EQ(0, std_span.size());
+}
+
+TEST_F(BlobViewData, arrayview_returns_slices)
+{
+	constexpr size_t slice_size = 2;
+
+	auto front_std_span = view.ArrayView<int>(0, slice_size);
+	EXPECT_EQ(slice_size, front_std_span.size());
+	EXPECT_EQ(view.Data(), front_std_span.data());
+
+	constexpr size_t offset = sizeof(int) * 2;
+	auto middle_std_span = view.ArrayView<int>(offset, slice_size);
+	EXPECT_EQ(slice_size, middle_std_span.size());
+	EXPECT_EQ(view.Data(offset), middle_std_span.data());
+
+	auto end_std_span = view.ArrayView<int>(view.Size() - offset, slice_size);
+	EXPECT_EQ(slice_size, end_std_span.size());
+	EXPECT_EQ(view.Data(view.Size() - offset), end_std_span.data());
+}
+
 //------------------------------------------------------------------------------
 
 TEST(BlobSpan, default_construction_should_be_empty)
@@ -192,6 +266,81 @@ TEST_F(BlobSpanData, sub_view_returns_slices)
 	EXPECT_EQ(slice_size, end_span.Size());
 	EXPECT_EQ(span.Data(span.Size() - slice_size), end_span.Data());
 }
+
+TEST_F(BlobSpanData, slice_returns_same_span)
+{
+	BlobView sub_span = span.Slice(0, span.Size());
+	EXPECT_EQ(span, sub_span);
+	EXPECT_EQ(span.Data(), sub_span.Data());
+	EXPECT_EQ(span.Size(), sub_span.Size());
+}
+
+TEST_F(BlobSpanData, slice_at_end_returns_empty_span)
+{
+	BlobView sub_span = span.Slice(span.Size(), span.Size());
+	EXPECT_TRUE(sub_span.Empty());
+	EXPECT_EQ(span.Data(bytes), sub_span.Data());
+	EXPECT_EQ(0, sub_span.Size());
+}
+
+TEST_F(BlobSpanData, slice_returns_smaller_span)
+{
+	BlobView sub_span = span.Slice(sizeof(int), sizeof(int) * 3);
+	EXPECT_EQ(2 * sizeof(int), sub_span.Size());
+	EXPECT_EQ(span.Data(sizeof(int)), sub_span.Data());
+}
+
+TEST_F(BlobSpanData, slice_returns_slices)
+{
+	constexpr size_t slice_size = sizeof(int) * 2;
+
+	BlobView front_span = span.Slice(0, slice_size);
+	EXPECT_EQ(slice_size, front_span.Size());
+	EXPECT_EQ(span.Data(), front_span.Data());
+
+	BlobView middle_span = span.Slice(slice_size, slice_size * 2);
+	EXPECT_EQ(slice_size, middle_span.Size());
+	EXPECT_EQ(span.Data(slice_size), middle_span.Data());
+
+	BlobView end_span = span.Slice(span.Size() - slice_size, span.Size());
+	EXPECT_EQ(slice_size, end_span.Size());
+	EXPECT_EQ(span.Data(span.Size() - slice_size), end_span.Data());
+}
+
+TEST_F(BlobSpanData, arrayspan_returns_same_elements)
+{
+	auto std_span = span.ArraySpan<int>(0, elements);
+	EXPECT_EQ(span.Data(), std_span.data());
+	EXPECT_EQ(elements, std_span.size());
+	EXPECT_EQ(span.Size(), std_span.size_bytes());
+}
+
+TEST_F(BlobSpanData, arrayspan_returns_empty_span)
+{
+	auto std_span = span.ArraySpan<int>(0, 0);
+	EXPECT_TRUE(std_span.empty());
+	EXPECT_EQ(span.Data(), std_span.data());
+	EXPECT_EQ(0, std_span.size());
+}
+
+TEST_F(BlobSpanData, arrayspan_returns_slices)
+{
+	constexpr size_t slice_size = 2;
+
+	auto front_std_span = span.ArraySpan<int>(0, slice_size);
+	EXPECT_EQ(slice_size, front_std_span.size());
+	EXPECT_EQ(span.Data(), front_std_span.data());
+
+	constexpr size_t offset = sizeof(int) * 2;
+	auto middle_std_span = span.ArraySpan<int>(offset, slice_size);
+	EXPECT_EQ(slice_size, middle_std_span.size());
+	EXPECT_EQ(span.Data(offset), middle_std_span.data());
+
+	auto end_std_span = span.ArraySpan<int>(span.Size() - offset, slice_size);
+	EXPECT_EQ(slice_size, end_std_span.size());
+	EXPECT_EQ(span.Data(span.Size() - offset), end_std_span.data());
+}
+
 
 //------------------------------------------------------------------------------
 
@@ -381,6 +530,74 @@ TEST_F(BlobDataFixture, span_returns_slices)
 	BlobSpan end_span = blob.Span(blob.Size() - slice_size, slice_size);
 	EXPECT_EQ(slice_size, end_span.Size());
 	EXPECT_EQ(blob.Data(blob.Size() - slice_size), end_span.Data());
+}
+
+TEST_F(BlobDataFixture, arrayview_returns_same_elements)
+{
+	auto std_span = blob.ArrayView<int>(0, elements);
+	EXPECT_EQ(blob.Data(), std_span.data());
+	EXPECT_EQ(elements, std_span.size());
+	EXPECT_EQ(blob.Size(), std_span.size_bytes());
+}
+
+TEST_F(BlobDataFixture, arrayview_returns_empty_span)
+{
+	auto std_span = blob.ArrayView<int>(0, 0);
+	EXPECT_TRUE(std_span.empty());
+	EXPECT_EQ(blob.Data(), std_span.data());
+	EXPECT_EQ(0, std_span.size());
+}
+
+TEST_F(BlobDataFixture, arrayview_returns_slices)
+{
+	constexpr size_t slice_size = 2;
+
+	auto front_std_span = blob.ArrayView<int>(0, slice_size);
+	EXPECT_EQ(slice_size, front_std_span.size());
+	EXPECT_EQ(blob.Data(), front_std_span.data());
+
+	constexpr size_t offset = sizeof(int) * 2;
+	auto middle_std_span = blob.ArrayView<int>(offset, slice_size);
+	EXPECT_EQ(slice_size, middle_std_span.size());
+	EXPECT_EQ(blob.Data(offset), middle_std_span.data());
+
+	auto end_std_span = blob.ArrayView<int>(blob.Size() - offset, slice_size);
+	EXPECT_EQ(slice_size, end_std_span.size());
+	EXPECT_EQ(blob.Data(blob.Size() - offset), end_std_span.data());
+}
+
+TEST_F(BlobDataFixture, arrayspan_returns_same_elements)
+{
+	auto std_span = blob.ArraySpan<int>(0, elements);
+	EXPECT_EQ(blob.Data(), std_span.data());
+	EXPECT_EQ(elements, std_span.size());
+	EXPECT_EQ(blob.Size(), std_span.size_bytes());
+}
+
+TEST_F(BlobDataFixture, arrayspan_returns_empty_span)
+{
+	auto std_span = blob.ArraySpan<int>(0, 0);
+	EXPECT_TRUE(std_span.empty());
+	EXPECT_EQ(blob.Data(), std_span.data());
+	EXPECT_EQ(0, std_span.size());
+}
+
+TEST_F(BlobDataFixture, arrayspan_returns_slices)
+{
+	constexpr size_t slice_size = 2;
+
+	auto front_std_span = blob.ArraySpan<int>(0, slice_size);
+	EXPECT_EQ(slice_size, front_std_span.size());
+	EXPECT_EQ(blob.Data(), front_std_span.data());
+
+	constexpr size_t offset = sizeof(int) * 2;
+	auto middle_std_span = blob.ArraySpan<int>(offset, slice_size);
+	EXPECT_EQ(slice_size, middle_std_span.size());
+	EXPECT_EQ(blob.Data(offset), middle_std_span.data());
+
+	auto end_std_span = blob.ArraySpan<int>(blob.Size() - offset, slice_size);
+	EXPECT_EQ(slice_size, end_std_span.size());
+	EXPECT_EQ(blob.Data(blob.Size() - offset), end_std_span.data());
 }
 
 
